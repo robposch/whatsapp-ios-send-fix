@@ -1,0 +1,12 @@
+# Python
+__pycache__/
+*.pyc
+
+# macOS
+.DS_Store
+
+# Never commit backups, databases, or snapshots (may contain personal data)
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+wa_fix_snapshot_*/
