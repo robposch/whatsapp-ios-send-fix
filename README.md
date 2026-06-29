@@ -141,5 +141,25 @@ eliminate this entire "receive-but-not-send after restore" class of failure.
 |---|---|
 | `scripts/wa_send_diagnose.py` | Integrity-check every WhatsApp DB in a backup; flag the malformed one. |
 | `scripts/wa_fix_send.py` | Recover the DB and patch it back into the backup (encrypted or unencrypted). |
+| `tests/` | Regression tests + a synthetic, PII-free fixture generator. |
 
 Passwords are read interactively (`getpass`) and never stored or logged.
+
+## Tests & privacy
+
+```bash
+python3 -m unittest discover tests
+```
+
+The tests **never use a real backup**. Fixtures are generated at run time from the
+*schema only* (`tests/infra_schema.py` — table/column names, no rows), so the
+`MessagingInfraDatabase` fixture carries no JIDs, phone numbers, or message
+content. `tests/pii_scan.py` scans the raw fixture bytes (and the `.recover`
+output) on every run and fails if it finds any JID/phone pattern — so "is there
+PII in here?" is answered by the test, not by trust.
+
+**Never commit a real backup or database.** The infra DB looks harmless (the send
+queues are empty), but its `receipt_device` table holds the JIDs of everyone you
+exchange receipts with — your contact graph — and `.recover` pulls those back out
+even of a *corrupt* copy. `.gitignore` blocks `*.sqlite`; keep real backups
+outside the repo.

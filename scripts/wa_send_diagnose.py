@@ -60,11 +60,16 @@ def quick_check(path):
             return "OK", "ok"
         return "MALFORMED", "; ".join(str(r[0]) for r in rows[:2])
     except sqlite3.DatabaseError as e:
+        msg = str(e)
         # WhatsApp's full-text-search DBs use custom tokenizers that plain
         # sqlite3 can't load — that's NOT corruption, just an unreadable FTS DB.
-        if "tokenizer" in str(e):
-            return "TOKENIZER", str(e)
-        return "ERROR", str(e)
+        if "tokenizer" in msg:
+            return "TOKENIZER", msg
+        # Severe corruption makes quick_check raise instead of returning rows;
+        # that's still the malformed-DB bug, so classify it accordingly.
+        if "malformed" in msg or "not a database" in msg:
+            return "MALFORMED", msg
+        return "ERROR", msg
 
 
 def whatsapp_sqlites_unencrypted(backup_dir):

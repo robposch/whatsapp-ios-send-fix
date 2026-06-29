@@ -57,6 +57,11 @@ def quick_check_ok(path):
     try:
         q = con.execute("PRAGMA quick_check;").fetchall()
         return len(q) == 1 and q[0][0] == "ok"
+    except sqlite3.DatabaseError:
+        # Severe corruption (e.g. a damaged header/schema page) makes quick_check
+        # *raise* instead of returning rows. Treat that as "not ok" so callers fall
+        # through to .recover — it's exactly the case this tool exists to repair.
+        return False
     finally:
         con.close()
 
